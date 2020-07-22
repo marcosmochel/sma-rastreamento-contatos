@@ -1,0 +1,12 @@
+MAS rastreamento_contatos {
+
+	infrastructure: Centralised
+	
+	environment: City
+
+	agents:
+		agent#5;
+
+	aslSourcePath:
+		"src/asl";
+}
