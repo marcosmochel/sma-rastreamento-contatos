@@ -1,16 +1,20 @@
-// Agent sample_agent in project rastreamento_contatos
+// Agent in project rastreamento_contatos
 
 /* Initial beliefs and rules */
+
+vivo.
+sintomas_gripais.
+tem_aplicativo. //RANDOM no env?
 
 
 /* Initial goals */
 
-!move(a).
+!move.
 
 /* Plans */
-+!move(a) : true
-	<-move_random(Me)
-	!move(a).
-+!move(a).
++!move : true
+	<-move_random
+	!move.
+
 
 

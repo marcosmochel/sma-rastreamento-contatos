@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry excluding="*.asl" kind="src" path="src/asl" />
-	<classpathentry kind="src" path="src/java" />
-	<classpathentry kind="lib" path="C:\Program Files\Jason\libs\jason-2.5.jar"/>
-<classpathentry kind="output" path="bin/classes"/></classpath>
+	<classpathentry excluding="*.asl" kind="src" path="src/asl"/>
+	<classpathentry kind="src" path="src/java"/>
+	<classpathentry kind="lib" path="E:/UFMA/Sistemas Multiagentes/jason-2.5/libs/jason-2.5.jar" sourcepath="E:/UFMA/Sistemas Multiagentes/jason-2.5/src"/>
+	<classpathentry kind="output" path="bin/classes"/>
+</classpath>
