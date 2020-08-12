@@ -1,163 +1,167 @@
-// Internal action code for project rastreamento_contatos
 
-//package rastreamento_contatos;
-
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
 import java.util.Random;
 import java.util.logging.Logger;
 
-import jason.asSyntax.*;
+import jason.asSyntax.Literal;
+import jason.asSyntax.Structure;
 import jason.environment.Environment;
-import jason.environment.grid.GridWorldModel;
-import jason.environment.grid.GridWorldView;
 import jason.environment.grid.Location;
 
-/**
- * @author Marco
- *
- */
 public class City extends Environment {
 
+	/* PARÂMETROS */
 	public static final int GSize = 20; // grid size
-	public static final int AgentNumber = 8;
+	public static final int NumeroAgentes = 30;
+	public static final int NumeroAgentesApp = 15;
+	public static final int NumeroCicloParaSintomas = 100;
+	
+	public static final float CHANCE_CONTAMINACAO = .5f;
+	public static final float CHANCE_SINTOMATICO = .7f;
+	public static final float CHANCE_MORTE = .025f;
+	public static final float CHANCE_SINTOMAS_SEM_COVID = .1f;
+	
+	public static final int DIAS_MANIFESTACAO_SINTOMAS = 5;
+	
+    
+	/* AÇÕES */
+	public static final Literal MOVE_RANDOM = Literal.parseLiteral("move_random");
+	public static final Literal AGENTE_RECUPERADO = Literal.parseLiteral("agente_recuperado");
+    public static final Literal ENTRA_ISOLAMENTO = Literal.parseLiteral("entra_isolamento");
+    public static final Literal SAI_ISOLAMENTO = Literal.parseLiteral("sai_isolamento");
+    public static final Literal EM_RECUPERACAO = Literal.parseLiteral("em_recuperacao");
+    public static final Literal INFORMA_SINTOMAS_APP = Literal.parseLiteral("informa_sintomas_app");
+    public static final Literal VERIFICA_LISTA_APP = Literal.parseLiteral("verifica_lista_app");
 
-    public static final Literal MoveRandom = Literal.parseLiteral("move_random");
-
+    /* CRENÇAS */
+    public static final Literal CONTAMINADO = Literal.parseLiteral("contaminado");
+    public static final Literal SINTOMAS = Literal.parseLiteral("sintomas");
+    
     static Logger logger = Logger.getLogger(City.class.getName());
     
     private CityModel model;
     private CityView  view;
+    
+    private Random random = new Random(System.currentTimeMillis());
 
     public void init(String[] args) {
-        model = new CityModel();
+        model = new CityModel(GSize, NumeroAgentes, NumeroAgentesApp);
         view  = new CityView(model);
-        model.setView(view);
     }
 
     @Override
     public boolean executeAction(String ag, Structure action) {
-    	int agId = getAgIdBasedOnName(ag);
+    	int agId = model.getAgIdBasedOnName(ag);
         try {
-            if (action.equals(MoveRandom)) {
-                model.movimentar(agId);
+            if (action.equals(MOVE_RANDOM)) {
+                movimentar(agId);
+            } else if(action.equals(ENTRA_ISOLAMENTO)) {
+            	entraIsolamento(agId);
+            } else if(action.equals(SAI_ISOLAMENTO)) {
+            	logger.warning("[SAI_ISOLAMENTO]A implementar");
+            } else if(action.equals(EM_RECUPERACAO)) {
+            	logger.warning("[EM_RECUPERACAO]A implementar");
+            } else if(action.equals(INFORMA_SINTOMAS_APP)) {
+            	logger.warning("[INFORMA_SINTOMAS_APP]A implementar");
+            } else if(action.equals(VERIFICA_LISTA_APP)) {
+            	logger.warning("[VERIFICA_LISTA_APP]A implementar");
             }
+            
+            updateAgentStatus(agId);
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         try {
-            Thread.sleep(100);
-        } catch (Exception e) {	
+            Thread.sleep(10);
+        } catch (Exception e) {
+        	e.printStackTrace();
         }
         
         informAgsEnvironmentChanged();
         return true;
     }
     
-    private int getAgIdBasedOnName(String agName) {
-        return Integer.parseInt(agName.substring(5)) - 1;
+    void entraIsolamento(int id) throws Exception {
+    	logger.info("Agente " + (id+1) + " entrando em isolamento.");
+    	Location la = model.getAgPos(id);
+    	model.add(CityView.HOUSE, la.x, la.y);
     }
 
+    void movimentar(int id) throws Exception {
+    	Location la = model.getAgPos(id);
+    	
+    	// movimento aleatorio para cima, baixo, esquerda e direita
+    	int n = random.nextInt(4);
+        switch(n) {
+            case 0:
+            	if(model.isFree(la.x + 1, la.y))
+            		la.x++;
+            	else
+            		contatoAtPos(id, la.x + 1, la.y);
+        	break;
+            case 1:
+            	if(model.isFree(id, la.x - 1, la.y))
+            		la.x--;
+            	else
+            		contatoAtPos(id, la.x - 1, la.y);
+        	break;
+            case 2:
+            	if(model.isFree(la.x, la.y + 1))
+            		la.y++;
+            	else
+            		contatoAtPos(id, la.x, la.y + 1);
+        	break;
+            case 3:
+            	if(model.isFree(la.x, la.y - 1))
+            		la.y--;
+            	else
+            		contatoAtPos(id, la.x, la.y - 1);
+        	break;
+        }
 
-    void updatePercepts(int id, int x, int y){
-    	String agName = "agent"+(id+1);
-        clearPercepts(agName);
-        Literal pos = Literal.parseLiteral("position("+x+", "+y+")");
-        addPercept(agName, pos);
+        updatePosition(id, la);
+        
+    }
+
+    public void contatoAtPos(int idAgOrigemContato, int x, int y) {
+		int idAg = model.getAgAtPos(x, y);
+		if(idAg > -1) { //Se há agente na posição na qual houve contato
+			//ToDo: Considerar contaminação inversa também (agente que fez contato que foi contaminado)
+        	if(model.isAgenteContaminado(idAgOrigemContato) && //Se agente que fez contato está contaminado 
+        	   CHANCE_CONTAMINACAO > random.nextFloat()){ //E se o agente contatado deu azar
+        		logger.info("Agente contaminado: " + (idAg+1));
+        		model.addAgenteContaminado(idAg);
+        		//addPercept(agContatadoName, CONTAMINADO);//ToDo: Só vai saber quando fizer o teste
+        	}
+        }
+		
+	}
+
+    void updatePosition(int agentId, Location l){
+    	// seta a nova posicao
+        model.setAgPos(agentId, l);
+        
+        // ToDo: atualiza a percepcao de localizacao
+        // String agName = CityModel.AGENT_NAME_PREFIX + (agentId+1);
     }
     
-    /**
-     * Modelo da cidade, que armazenará os dados inerentes ao ambiente
-     *
-     */
-    class CityModel extends GridWorldModel {
-        Random random = new Random(System.currentTimeMillis());
-        
-        //Matriz de contatos
-        Boolean[][] contatos = new Boolean[AgentNumber][AgentNumber];
-
-        private CityModel() {
-            super(GSize, GSize, AgentNumber);
-
-            // initial location of agents
-            try {
-            	for (int i = 0 ; i < AgentNumber; i++) {
-                	int randomPosX = random.nextInt(GSize);
-                	int randomPosY = random.nextInt(GSize);
-            		setAgPos(i, randomPosX, randomPosY);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        void movimentar(int id) throws Exception {
-        	Location la = getAgPos(id);
-        	
-        	// movimento aleatorio para cima, baixo, esquerda e direita
-        	int n = random.nextInt(4);
-            switch(n) {
-	            case 0:
-	            	la.x++;
-	            	break;
-	            case 1:
-	            	la.x--;
-	            	break;
-	            case 2:
-	            	la.y++;
-	            	break;
-	            case 3:
-	            	la.y--;
-	            	break;
-            }
-            
-            // corrige o movimento caso o agente tente sair do ambiente
-            if (la.x == GSize) {
-                la.x--;
-            } else if (la.x == -1) {
-            	la.x++;
-            }
-            if (la.y == GSize) {
-                la.y--;
-            } else if (la.y == -1) {
-            	la.y++;
-            }
- 
-            // seta a nova posição
-            setAgPos(id, la);
-            // atualiza a percepção de localizacao
-            updatePercepts(id, la.x, la.y);
-        }
-
-    }
-
     /*
-     * Classe View, que manipula o comportamente de renderização do ambiente
+     * Atualiza o status do agente a cada ação que este executa, de acordo com a situação atual deste.
+     * e.g. Agente passa a ficar sintomático, pois está contaminado.
      */
-    @SuppressWarnings("serial")
-	class CityView extends GridWorldView {
-
-        public CityView(CityModel model) {
-            super(model, "Cidade", 800);
-            defaultFont = new Font("Arial", Font.BOLD, 10); // change default font
-            setVisible(true);
-            repaint();
-        }
-
-        /** draw application objects */
-
-        @Override
-        public void drawAgent(Graphics g, int x, int y, Color c, int id) {
-            String label = "A"+(id+1);
-            c = Color.blue;
-            
-            super.drawAgent(g, x, y, c, -1);
-            g.setColor(Color.white);
-            super.drawString(g, x, y, defaultFont, label);
-            repaint();
-        }
-
+    void updateAgentStatus(int agentId) {
+    	if(model.isAgenteContaminado(agentId)) {
+    		//Se estiver entre o m-ésimo e n-ésimo dia de contaminação, há uma change de manifestar sintomas
+    		if(!model.isAgenteSintomatico(agentId) &&
+    		   model.getAgenteDiasContaminado(agentId) == DIAS_MANIFESTACAO_SINTOMAS &&
+    		   random.nextFloat() < CHANCE_SINTOMATICO) {
+    			model.addAgenteSintomatico(agentId);
+    			addPercept(CityModel.AGENT_NAME_PREFIX + (agentId+1), SINTOMAS);
+    			logger.info("Agente " + (agentId+1) + " desenvolveu sintomas.");
+    		}
+    	}
+    	
+    	model.cycle(agentId);
     }
 }
