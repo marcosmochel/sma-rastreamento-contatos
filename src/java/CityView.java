@@ -7,10 +7,10 @@ import jason.environment.grid.GridWorldView;
 public @SuppressWarnings("serial")
 class CityView extends GridWorldView {
 	
-	static final int HOUSE  = 16; // house code in grid model
+	static final int ISOLATION  = 16; // house code in grid model
 	
-	static final Color verde = new Color(30, 130, 30);
-	static final Color amarelo = new Color(240, 240, 0);
+	static final Color VERDE = new Color(30, 130, 30);
+	static final Color AMARELO = new Color(240, 240, 0);
 	
 	CityModel model;
 
@@ -23,25 +23,29 @@ class CityView extends GridWorldView {
     }
 
     /** draw application objects */
-    
     @Override
     public void draw(Graphics g, int x, int y, int element) {
         switch (element) {
-        	case CityView.HOUSE:
+        	case CityView.ISOLATION:
         		drawObstacle(g, x, y);
             break;
         }
     }
+    
 
     @Override
-    public void drawAgent(Graphics g, int x, int y, Color c, int id) {
-    	if(model.isAgenteSintomatico(id))
-    		c = Color.ORANGE;
-    	else if(model.isAgenteContaminado(id)) 
-        	c = amarelo;
-        else
-        	c = verde;
-        super.drawAgent(g, x, y, c, -1);
+    public void drawAgent(Graphics g, int x, int y, Color agColor, int id) {
+    	
+    	if(model.isAgenteSintomatico(id)) {
+    		agColor = Color.ORANGE;
+    	} else if(model.isAgenteContaminado(id)) {
+    		agColor = AMARELO;
+    	} else if (model.isAgenteImunizado(id)){    		agColor = Color.BLUE;
+    	} else {
+    		agColor = VERDE;
+    	}
+    	
+        super.drawAgent(g, x, y, agColor, -1);
         
         String label = "A"+(id+1);
         g.setColor(Color.white);

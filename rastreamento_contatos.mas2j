@@ -5,7 +5,7 @@ MAS rastreamento_contatos {
 	environment: City
 
 	agents:
-		agent#30;
+		agent#40;
 		
 	aslSourcePath:
 		"src/asl";

@@ -1,14 +1,6 @@
 // Agent in project rastreamento_contatos
 
 /* Initial beliefs and rules */
-/* Commented beliefs are for furter use and will be initialized by enviroment */
-
-//isolado.
-//imunizado.
-//sintomas.
-//tem_aplicativo.
-//pos(X, Y)
-
 
 /* Initial goals */
 !move.
@@ -19,29 +11,49 @@
 		 not isolado
 	<-move_random;
 	  !move.
+	  
++!move : sintomas
+	<-.print("Sinto sintomas, evitar movimentação!").
+	  
++sintomas[source(percept)]
+	<-.print("Desenvolvi sintomas!");
+	  +isolado(14);
+	  entra_isolamento.
 
-//Se está com sintomas aparentes e não está em isolamento, entra em isolamento por 14 dias
-+!move :     sintomas &
-		 not isolado
-	<- +isolado(14);
-		entra_isolamento.
 
-//Se recupera até o 14º dia	  
-+isolado(DIAS) : DIAS > 0
-	<--+isolado(DIAS-1);
-		em_recuperacao.
+/* Controle de contaminação */
++contaminado [source(percept)] //Percepção
+	<- !cura(14); 
+	  .print("Contaminado pelo ambiente (outro agente).").
 
-+isolado(DIAS) : tem_aplicativo
-	<-informa_sintomas_app.
++!cura(X) : X > 0
+	<- !cura(X - 1);
+	   .print("Contaminado em recuperação, restando ", X, " dias");
+	   em_recuperacao.
 
-//Recuperado	  
-+isolado(DIAS) : DIAS == 0
-	<--isolado(DIAS);
-	  +imunizado;
-	  -sintomas;
-	  -contaminado;
++!cura(X) : X == 0 //Fim da contaminação
+	<- -contaminado;
+	   +imunizado;
+	   curado.
+
+
+/* Controle de Isolamento */
+//Permanece isolado por X ciclos
++isolado(X) : X > 0
+	<--isolado(X);
+	  .print("Isolamento encerra em ", X, "dias");
+	  +isolado(X-1).
+
+//Fim do isolamento
++isolado(X) : X == 0
+	<--isolado(0); 
 	  sai_isolamento;
 	  !move.
 
--contaminado
-	<- agente_recuperado.
+//Se desenvolve sintomas e tem o aplicativo, informa
++sintomas: tem_aplicativo
+	<-informa_sintomas_app.
+	
++morto[source(percept)]
+	<-.my_name(NAME);
+	  .kill_agent(NAME).

@@ -16,6 +16,7 @@ public class CityModel extends GridWorldModel {
     
     private Map<Integer, Integer> agentesDiasContaminados;
     private Map<Integer, Integer> agentesDiasSintomaticos;
+    private Map<Integer, Integer> agentesDiasIsolados;
     private Map<Integer, Integer> agentesDiasImunizados;
     
     private Map<Integer, Integer> contatosApp;
@@ -29,9 +30,8 @@ public class CityModel extends GridWorldModel {
     	
     	this.agentesDiasContaminados = new HashMap<Integer, Integer>();
     	this.agentesDiasSintomaticos = new HashMap<Integer, Integer>();
+    	this.agentesDiasIsolados = new HashMap<Integer, Integer>();
     	this.agentesDiasImunizados = new HashMap<Integer, Integer>();
-    	
-    	this.contatosApp = new HashMap<Integer, Integer>();
     	
         // Inicializa agentes
         try {
@@ -43,10 +43,6 @@ public class CityModel extends GridWorldModel {
             	
                 //ToDo: Inicializa alguns agentes com App
             }
-        	
-        	//Contamina agente 0 inicialmente
-        	agentesDiasContaminados.put(0, 0);
-        	
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -108,6 +104,22 @@ public class CityModel extends GridWorldModel {
 	public void removeAgenteSintomatico(int idAg) {
 		agentesDiasSintomaticos.remove(idAg);
 	}
+	
+	public boolean isAgenteIsolado(int agId) {
+    	return agentesDiasIsolados.containsKey(agId);
+    }
+	
+    public int getAgenteDiasIsolado(int agId) {
+    	return agentesDiasIsolados.get(agId);
+    }
+
+	public void addAgenteIsolado(int idAg) {
+		agentesDiasIsolados.put(idAg, 0);
+	}
+	
+	public void removeAgenteIsolado(int idAg) {
+		agentesDiasIsolados.remove(idAg);
+	}
 
 	public void cycle(int agentId) {
 		if(agentesDiasContaminados.containsKey(agentId))
@@ -116,6 +128,8 @@ public class CityModel extends GridWorldModel {
 			agentesDiasImunizados.put(agentId, agentesDiasImunizados.get(agentId) + 1);
 		if(agentesDiasSintomaticos.containsKey(agentId))
 			agentesDiasSintomaticos.put(agentId, agentesDiasSintomaticos.get(agentId) + 1);
+		if(agentesDiasIsolados.containsKey(agentId))
+			agentesDiasIsolados.put(agentId, agentesDiasIsolados.get(agentId) + 1);
 	}
 
 	
